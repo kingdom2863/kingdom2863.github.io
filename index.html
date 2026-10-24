@@ -139,7 +139,7 @@
                 <h3 class="font-black text-navy text-sm sm:text-base" data-t="buff_title">バフ使用ガイド</h3>
             </div>
             <p id="config-buff_text" class="text-xs sm:text-sm text-navy-soft leading-relaxed mb-2.5">読み込み中...</p>
-            <div id="buff-notes" class="bg-white border border-ice-light rounded-lg px-3 py-2.5 text-xs sm:text-sm leading-relaxed">
+            <div id="buff-notes" class="bg-white border border-ice-light rounded-lg divide-y divide-ice-light text-xs sm:text-sm leading-relaxed">
                 <p class="font-bold text-gold-deep flex items-center gap-1.5 mb-0.5">
                     <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/></svg>
                     <span id="config-buff_note_title">読み込み中...</span>
@@ -505,7 +505,7 @@
         const box = document.getElementById('buff-notes');
         box.classList.toggle('hidden', !notes.length);
         box.innerHTML = notes.map((n, i) => `
-            <div class="${i ? 'mt-2.5' : ''}">
+            <div class="px-3 py-2.5">
                 ${n.title ? `<p class="font-bold text-gold-deep flex items-center gap-1.5 mb-0.5">${crown}<span>${escapeHtml(n.title)}</span></p>` : ''}
                 ${n.body ? `<p class="text-navy-soft">${escapeHtml(n.body)}</p>` : ''}
             </div>`).join('');
