@@ -645,6 +645,15 @@
 
     /* ---------- 新しいシート構成（4シート）→ 描画用の形に変換 ---------- */
     function adaptData(d) {
+        // タイトルも説明も空の行（入力途中の行など）は表示しない
+        ['cover', 'feature', 'promise', 'event', 'alliance'].forEach(sec => {
+            const cs = d[sec] && d[sec].cards;
+            if (!cs) return;
+            Object.keys(cs).forEach(k => {
+                const c = cs[k];
+                c.items = (c.items || []).filter(i => String(i.title || '').trim() || String(i.body || '').trim());
+            });
+        });
         const cards = sec => (d[sec] && d[sec].cards) || {};
         const card = (sec, name) => cards(sec)[name] || { title: '', desc: '', items: [] };
         const cfg = {};

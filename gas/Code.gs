@@ -8,11 +8,15 @@
  *   イベントガイド   … 最強王国 / 特典 / その他イベント
  *   同盟紹介        … 時間表 / 同盟
  *
- * 全シート共通の列：カード | 行の種類 | タイトル | 文章 | 表示
- *   カード   … ページのどのカードに出すか
- *   行の種類 … 「見出し」＝カードのタイトルと説明文、「中身」＝カードの中の1行
+ * 全シート共通の列：カード | 行の種類 | タイトル | 説明 | 表示
+ *   行の種類 … 「大」＝大カードのタイトル
+ *              「中」＝中カードのタイトルと説明
+ *              「小」＝中カードの中の1項目（タイトルと説明）
+ *   カード   … 中の行だけ指定（基本ルール・違反対応など、見た目の種類を決める名前）
+ *              小の行は空欄でOK（すぐ上の中カードに入る）
  *   表示     … 「非表示」にすると行を消さずにページから隠せる
  *   並び順   … シート上の行の順番がそのまま表示順
+ *   ※ 旧形式（行の種類＝見出し／中身、列名＝文章、カード＝セクション）もそのまま読める
  *
  * シート名を変えても、タブの順番（表紙→特徴→約束→イベント→同盟）がそのままなら修正不要。
  * ※ このファイルの中身を編集する必要はありません。編集はすべてスプレッドシートで行います。
@@ -33,7 +37,7 @@ const SHEETS = {
   alliance: { name: '同盟紹介',       index: 5 },
 };
 
-const BASE_COLS = ['カード', '行の種類', 'タイトル', '文章', '表示'];
+const BASE_COLS = ['カード', '行の種類', 'タイトル', '説明', '文章', '表示'];
 
 // 追加列 → JSONのキー（ここに無い同盟紹介の列はすべて「イベント時間」の列として扱う）
 const FIELD_KEYS = { 'URL': 'url', '開始': 'start', '締切': 'deadline', 'グループ': 'group', '盟主': 'leader', '盟主アイコン': 'icon' };
@@ -80,28 +84,47 @@ function readSection_(ss, key) {
   const timeCols = key === 'alliance' ? headers.filter(h => h && known.indexOf(h) < 0) : [];
   if (key === 'alliance') result.timeColumns = timeCols;
 
+  let lastCard = '';                 // 直前の中カード（小の行はここに入る）
+  const hiddenCards = {};            // 非表示にした中カード（その小の行も出さない）
+
   values.forEach(row => {
-    const card = get(row, 'カード');
-    if (!card) return;
-    const show = get(row, '表示');
-    if (show === '非表示' || show.toUpperCase() === 'FALSE') return;   // 非表示の行は出さない
-
-    const type = get(row, '行の種類') || '中身';
+    const rawType = get(row, '行の種類');
+    let card = get(row, 'カード');
     const title = get(row, 'タイトル');
-    const body = get(row, '文章');
+    const body = get(row, '説明') || get(row, '文章');
+    const show = get(row, '表示');
+    const hidden = (show === '非表示' || show.toUpperCase() === 'FALSE');
 
-    if (card === 'セクション') {
-      if (type === '見出し') result.title = title;
+    // 行の種類を 大 / 中 / 小 にそろえる（旧形式の 見出し・中身 にも対応）
+    let level = '';
+    if (rawType === '大' || (rawType === '見出し' && card === 'セクション')) level = '大';
+    else if (rawType === '中' || rawType === '見出し') level = '中';
+    else if (rawType === '小' || rawType === '中身') level = '小';
+    else if (card === 'セクション') level = '大';
+    else if (card || title || body) level = '小';
+    if (!level) return;
+
+    if (level === '大') {
+      if (!hidden) result.title = title;
       return;
     }
 
-    const c = result.cards[card] || (result.cards[card] = { title: '', desc: '', items: [] });
-    if (type === '見出し') {
+    if (level === '中') {
+      card = card || title;          // カード名が空ならタイトルを名前にする
+      if (!card) return;
+      lastCard = card;
+      if (hidden) { hiddenCards[card] = true; return; }
+      const c = result.cards[card] || (result.cards[card] = { title: '', desc: '', items: [] });
       c.title = title;
       c.desc = body;
       return;
     }
 
+    // 小
+    card = card || lastCard;
+    if (!card || hidden || hiddenCards[card]) return;
+    if (!title && !body) return;     // タイトルも説明も空の行（入力途中）は出さない
+    const c = result.cards[card] || (result.cards[card] = { title: '', desc: '', items: [] });
     const item = { title: title, body: body };
     Object.keys(FIELD_KEYS).forEach(h => { if (col(h) >= 0) item[FIELD_KEYS[h]] = get(row, h); });
     if (timeCols.length) {
