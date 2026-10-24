@@ -701,9 +701,13 @@
         put('feature_title', fr.title);   put('feature_desc', fr.desc, true);
         put('rules_title', ru.title);     put('rules_desc', ru.desc, true);
         // 基本ルールの中カード（GASで同じ名前の2枚目以降は「基本ルール#2」…のキーで届く。シートの順番どおり）
+        // 旧形式の「基本ルール」だけでなく、分割した「基本ルール（同盟）」や「基本ルール（プレイヤー）」にも対応する
         const promiseCards = cards('promise');
         cfg.rules_cards = Object.keys(promiseCards)
-            .filter(k => (promiseCards[k].type || k.replace(/#\d+$/, '')) === '基本ルール')
+            .filter(k => {
+                const type = (promiseCards[k].type || k.replace(/#\d+$/, ''));
+                return String(type).startsWith('基本ルール');
+            })
             .map(k => promiseCards[k]);
         put('violation_title', vi.title); put('violation_desc', vi.desc, true);
         put('buff_title', bu.title);
