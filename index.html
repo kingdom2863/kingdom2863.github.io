@@ -49,7 +49,7 @@
     <!-- ===== JUMP NAV ===== -->
     <nav class="grid grid-cols-2 sm:grid-cols-4 gap-2" aria-label="ページ内リンク">
         <a href="#feature"  class="panel rounded-xl py-2.5 text-center text-xs sm:text-sm font-bold text-navy hover:bg-ice-pale transition" data-t="nav_feature">サーバーの特徴</a>
-        <a href="#promise"  class="panel rounded-xl py-2.5 text-center text-xs sm:text-sm font-bold text-navy hover:bg-ice-pale transition" data-t="nav_promise">サーバーの約束</a>
+        <a href="#promise"  class="panel rounded-xl py-2.5 text-center text-xs sm:text-sm font-bold text-navy hover:bg-ice-pale transition" data-t="nav_promise">サーバーのルール</a>
         <a href="#event"    class="panel rounded-xl py-2.5 text-center text-xs sm:text-sm font-bold text-navy hover:bg-ice-pale transition" data-t="nav_event">イベントガイド</a>
         <a href="#alliance" class="panel rounded-xl py-2.5 text-center text-xs sm:text-sm font-bold text-navy hover:bg-ice-pale transition" data-t="nav_alliance">同盟紹介</a>
     </nav>
@@ -81,11 +81,11 @@
         <div id="feature-cards" class="space-y-6"></div>
     </section>
 
-    <!-- ===== 1. サーバーの約束 ===== -->
+    <!-- ===== 1. サーバーのルール ===== -->
     <section id="promise" class="panel rounded-2xl p-4 sm:p-7 space-y-6">
         <div class="flex items-center gap-2.5 pb-2.5 border-b-2 border-gold">
             <span class="bg-navy text-gold font-cinzel font-bold text-[11px] sm:text-xs px-2.5 py-0.5 rounded whitespace-nowrap" data-t="promise_badge">PROMISE</span>
-            <h2 class="text-lg sm:text-2xl font-black text-navy" data-t="promise_title">#2863 サーバーの約束</h2>
+            <h2 class="text-lg sm:text-2xl font-black text-navy" data-t="promise_title">#2863 サーバーのルール</h2>
         </div>
 
         <!-- 友好協定（約束シートにカード「友好協定」がある時だけ表示） -->
@@ -457,7 +457,7 @@
             </div>`).join('');
     }
 
-    /* ---------- 1. サーバーの約束 ---------- */
+    /* ---------- 1. サーバーのルール ---------- */
     function renderPromise(rules, config) {
         document.getElementById('feature-card').classList.toggle('hidden', !config.showFeatureCard);
         // 友好協定・サーバーの特徴
@@ -679,7 +679,11 @@
         cfg.footer_lines = card('cover', 'フッター').items.map(i => i.body || i.title).filter(Boolean);
         if (d.updated) cfg.last_updated = 'Last Updated : ' + d.updated;
 
-        // セクション見出し
+        // セクション見出し（シート名と大カードの見出しを一致させる）
+        put('nav_feature', d.feature && d.feature.title, true);
+        put('nav_promise', d.promise && d.promise.title, true);
+        put('nav_event', d.event && d.event.title, true);
+        put('nav_alliance', d.alliance && d.alliance.title, true);
         put('promise_title', d.promise && d.promise.title);
         put('event_title', d.event && d.event.title);
         put('alliance_title', d.alliance && d.alliance.title);
@@ -695,7 +699,7 @@
         };
         cfg.showFeatureCard = hasFeatSheet && hasFr;   // 両方にある時だけ約束側にも残す
 
-        // サーバーの約束
+        // サーバーのルール
         const fr = card('promise', '友好協定'), ru = card('promise', '基本ルール'),
               vi = card('promise', '違反対応'),  bu = card('promise', 'バフ使用ガイド');
         put('feature_title', fr.title);   put('feature_desc', fr.desc, true);

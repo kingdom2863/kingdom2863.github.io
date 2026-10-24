@@ -4,7 +4,7 @@
  * シート構成（ページの上から順）
  *   表紙            … ヘッダー / フッター / 申請フォーム
  *   サーバーの特徴   … 友好協定 など（カードを足せば中カードが増える）
- *   サーバーの約束   … 基本ルール / 違反対応 / バフ使用ガイド
+ *   サーバーのルール … 基本ルール / 違反対応 / バフ使用ガイド
  *   イベントガイド   … 最強王国 / 特典 / その他イベント
  *   同盟紹介        … 時間表 / 同盟
  *
@@ -19,7 +19,7 @@
  *   並び順   … シート上の行の順番がそのまま表示順
  *   ※ 旧形式（行の種類＝見出し／中身、列名＝文章、カード＝セクション）もそのまま読める
  *
- * シート名を変えても、タブの順番（表紙→特徴→約束→イベント→同盟）がそのままなら修正不要。
+ * シート名を変えても、タブの順番（表紙→特徴→ルール→イベント→同盟）がそのままなら修正不要。
  * ※ このファイルの中身を編集する必要はありません。編集はすべてスプレッドシートで行います。
  */
 
@@ -27,15 +27,15 @@ const SHEET_ID = '1vZQuzRFY62wWvovICo33Mj0ARVKG29NxctgujrQngtE';
 const CACHE_SECONDS = 60;   // 表示高速化のためのキャッシュ秒数（0で無効）
 
 // シート（キー＝JSONのキー）
-//   name  … まずこの名前でシートを探す
+//   names … まずこの名前でシートを探す（旧名も両対応）
 //   index … 名前で見つからない時は、左から何番目のタブか（1始まり）で探す
 //   → シート名を変えても、タブの順番がそのままならGASの修正は不要
 const SHEETS = {
-  cover:    { name: '表紙',           index: 1 },
-  feature:  { name: 'サーバーの特徴', index: 2 },
-  promise:  { name: 'サーバーの約束', index: 3 },
-  event:    { name: 'イベントガイド', index: 4 },
-  alliance: { name: '同盟紹介',       index: 5 },
+  cover:    { names: ['表紙'], index: 1 },
+  feature:  { names: ['サーバーの特徴'], index: 2 },
+  promise:  { names: ['サーバーのルール', 'サーバーの約束'], index: 3 },
+  event:    { names: ['イベントガイド'], index: 4 },
+  alliance: { names: ['同盟紹介'], index: 5 },
 };
 
 const BASE_COLS = ['カード', '行の種類', 'タイトル', '説明', '文章', '表示'];
@@ -157,8 +157,11 @@ function typeOf_(key) {
 /** シートを名前で探し、無ければタブの順番で探す */
 function findSheet_(ss, key) {
   const def = SHEETS[key];
-  const byName = ss.getSheetByName(def.name);
-  if (byName) return byName;
+  const names = Array.isArray(def && def.names) ? def.names : [def && def.name].filter(Boolean);
+  for (const name of names) {
+    const byName = ss.getSheetByName(name);
+    if (byName) return byName;
+  }
   const sheets = ss.getSheets();
   return sheets[def.index - 1] || null;
 }
