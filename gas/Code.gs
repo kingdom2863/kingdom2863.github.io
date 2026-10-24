@@ -14,6 +14,7 @@
  *              「小」＝中カードの中の1項目（タイトルと説明）
  *   カード   … 中の行だけ指定（基本ルール・違反対応など、見た目の種類を決める名前）
  *              小の行は空欄でOK（すぐ上の中カードに入る）
+ *              同じカード名の中を2つ書くと、同じ見た目の中カードが2枚並ぶ（JSONのキーは「基本ルール#2」）
  *   表示     … 「非表示」にすると行を消さずにページから隠せる
  *   並び順   … シート上の行の順番がそのまま表示順
  *   ※ 旧形式（行の種類＝見出し／中身、列名＝文章、カード＝セクション）もそのまま読める
@@ -84,8 +85,17 @@ function readSection_(ss, key) {
   const timeCols = key === 'alliance' ? headers.filter(h => h && known.indexOf(h) < 0) : [];
   if (key === 'alliance') result.timeColumns = timeCols;
 
-  let lastCard = '';                 // 直前の中カード（小の行はここに入る）
+  let lastCard = '';                 // 直前の中カードのキー（小の行はここに入る）
   const hiddenCards = {};            // 非表示にした中カード（その小の行も出さない）
+  const headed = {};                 // 中の行が出たカード名 → 回数（同じ名前の2つ目以降は「名前#2」の別カードにする）
+
+  // カード名 → 小の行を入れる先のキー（直前の中カードが同じ種類ならそこ、無ければ最後の同じ種類）
+  const keyFor = name => {
+    if (lastCard && typeOf_(lastCard) === name) return lastCard;
+    const n = headed[name] || 1;
+    return n > 1 ? name + '#' + n : name;
+  };
+  const newCard = (key) => ({ type: typeOf_(key), title: '', desc: '', items: [] });
 
   values.forEach(row => {
     const rawType = get(row, '行の種類');
@@ -112,19 +122,21 @@ function readSection_(ss, key) {
     if (level === '中') {
       card = card || title;          // カード名が空ならタイトルを名前にする
       if (!card) return;
-      lastCard = card;
-      if (hidden) { hiddenCards[card] = true; return; }
-      const c = result.cards[card] || (result.cards[card] = { title: '', desc: '', items: [] });
+      headed[card] = (headed[card] || 0) + 1;
+      const key = headed[card] > 1 ? card + '#' + headed[card] : card;
+      lastCard = key;
+      if (hidden) { hiddenCards[key] = true; return; }
+      const c = result.cards[key] || (result.cards[key] = newCard(key));
       c.title = title;
       c.desc = body;
       return;
     }
 
     // 小
-    card = card || lastCard;
-    if (!card || hidden || hiddenCards[card]) return;
+    const key = card ? keyFor(card) : lastCard;
+    if (!key || hidden || hiddenCards[key]) return;
     if (!title && !body) return;     // タイトルも説明も空の行（入力途中）は出さない
-    const c = result.cards[card] || (result.cards[card] = { title: '', desc: '', items: [] });
+    const c = result.cards[key] || (result.cards[key] = newCard(key));
     const item = { title: title, body: body };
     Object.keys(FIELD_KEYS).forEach(h => { if (col(h) >= 0) item[FIELD_KEYS[h]] = get(row, h); });
     if (timeCols.length) {
@@ -135,6 +147,11 @@ function readSection_(ss, key) {
   });
 
   return result;
+}
+
+/** カードのキー → 種類（"基本ルール#2" → "基本ルール"） */
+function typeOf_(key) {
+  return String(key).replace(/#\d+$/, '');
 }
 
 /** シートを名前で探し、無ければタブの順番で探す */

@@ -102,18 +102,19 @@
             </ul>
         </div>
 
-        <!-- 基本ルール -->
-        <div class="bg-ice-pale border border-ice-light rounded-xl p-4">
-            <div class="flex items-center gap-2 pb-2 mb-2 border-b border-ice-light">
-                <svg class="w-5 h-5 text-ice-text shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-                </svg>
-                <h3 class="font-black text-navy text-sm sm:text-base" data-t="rules_title">基本ルール</h3>
+        <!-- 基本ルール（シートで同じカード名の中を足すと、このカードが増える） -->
+        <div id="rules-cards" class="space-y-6">
+            <div class="bg-ice-pale border border-ice-light rounded-xl p-4">
+                <div class="flex items-center gap-2 pb-2 mb-2 border-b border-ice-light">
+                    <svg class="w-5 h-5 text-ice-text shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                    </svg>
+                    <h3 class="font-black text-navy text-sm sm:text-base">基本ルール</h3>
+                </div>
+                <ol class="bg-white border border-ice-light rounded-lg divide-y divide-ice-light text-xs sm:text-sm text-navy-soft leading-relaxed">
+                    <li class="px-3 py-2.5 text-navy-mute">読み込み中...</li>
+                </ol>
             </div>
-            <p class="text-xs sm:text-sm text-navy-soft leading-relaxed mb-2.5" data-t="rules_desc">王国内のすべてのプレイヤーが守るルールです。</p>
-            <ol id="rules-container" class="bg-white border border-ice-light rounded-lg divide-y divide-ice-light text-xs sm:text-sm text-navy-soft leading-relaxed">
-                <li class="px-3 py-2.5 text-navy-mute">読み込み中...</li>
-            </ol>
         </div>
 
         <!-- 違反対応プロトコル（赤＝違反だけ） -->
@@ -470,19 +471,29 @@
                 </li>`).join('')
             : '<li class="px-3 py-2.5 text-navy-mute">登録されていません。</li>';
 
-        // 基本ルール（番号付きの行）
-        const rc = document.getElementById('rules-container');
-        const core = rulesOf(rules, '基本ルール');
-        rc.innerHTML = core.length
-            ? core.map((r, i) => `
-                <li class="px-3 py-2.5 flex items-start gap-2.5">
-                    <span class="bg-ice-light text-ice-text font-bold text-[11px] px-1.5 py-0.5 rounded shrink-0 mt-0.5 tabular-nums">${String(i + 1).padStart(2, '0')}</span>
-                    <div>
-                        ${r.title ? `<p class="font-bold text-navy">${escapeHtml(r.title)}</p>` : ''}
-                        <p>${escapeHtml(r.content)}</p>
-                    </div>
-                </li>`).join('')
-            : '<li class="px-3 py-2.5 text-navy-mute">登録されていません。</li>';
+        // 基本ルール（カードごとに番号付きの行。同じカード名の中が複数あれば複数枚）
+        const ICON_SHIELD = '<svg class="w-5 h-5 text-ice-text shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>';
+        const ruleCards = Array.isArray(config.rules_cards) && config.rules_cards.length
+            ? config.rules_cards
+            : [{ title: t('rules_title', '基本ルール'), desc: '', items: [] }];
+        document.getElementById('rules-cards').innerHTML = ruleCards.map(c => `
+            <div class="bg-ice-pale border border-ice-light rounded-xl p-4">
+                <div class="flex items-center gap-2 pb-2 mb-2 border-b border-ice-light">
+                    ${ICON_SHIELD}
+                    <h3 class="font-black text-navy text-sm sm:text-base">${escapeHtml(c.title || '基本ルール')}</h3>
+                </div>
+                ${c.desc ? `<p class="text-xs sm:text-sm text-navy-soft leading-relaxed mb-2.5">${escapeHtml(c.desc)}</p>` : ''}
+                <ol class="bg-white border border-ice-light rounded-lg divide-y divide-ice-light text-xs sm:text-sm text-navy-soft leading-relaxed">
+                    ${c.items.length ? c.items.map((r, i) => `
+                    <li class="px-3 py-2.5 flex items-start gap-2.5">
+                        <span class="bg-ice-light text-ice-text font-bold text-[11px] px-1.5 py-0.5 rounded shrink-0 mt-0.5 tabular-nums">${String(i + 1).padStart(2, '0')}</span>
+                        <div>
+                            ${r.title ? `<p class="font-bold text-navy">${escapeHtml(r.title)}</p>` : ''}
+                            <p>${escapeHtml(r.body)}</p>
+                        </div>
+                    </li>`).join('') : '<li class="px-3 py-2.5 text-navy-mute">登録されていません。</li>'}
+                </ol>
+            </div>`).join('');
 
         // 違反対応プロトコル
         const vc = document.getElementById('violations-container');
@@ -689,6 +700,11 @@
               vi = card('promise', '違反対応'),  bu = card('promise', 'バフ使用ガイド');
         put('feature_title', fr.title);   put('feature_desc', fr.desc, true);
         put('rules_title', ru.title);     put('rules_desc', ru.desc, true);
+        // 基本ルールの中カード（GASで同じ名前の2枚目以降は「基本ルール#2」…のキーで届く。シートの順番どおり）
+        const promiseCards = cards('promise');
+        cfg.rules_cards = Object.keys(promiseCards)
+            .filter(k => (promiseCards[k].type || k.replace(/#\d+$/, '')) === '基本ルール')
+            .map(k => promiseCards[k]);
         put('violation_title', vi.title); put('violation_desc', vi.desc, true);
         put('buff_title', bu.title);
         cfg.buff_text = bu.desc;
@@ -710,7 +726,6 @@
         const addRules = (category, c) => c.items.forEach((it, i) =>
             rules.push({ category, title: it.title, content: it.body, display_order: i + 1 }));
         addRules('サーバーの特徴', fr);
-        addRules('基本ルール', ru);
         addRules('違反プロトコル', vi);
         addRules('SVSルール', sv);
         addRules('その他イベント', ot);
