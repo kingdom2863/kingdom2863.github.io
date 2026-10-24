@@ -1,9 +1,9 @@
 /**
- * 2863王国 ポータルサイト データ配信API（5シート構成版）
+ * 2863王国 ポータルサイト データ配信API（1シート＝1大カード）
  *
  * シート構成（ページの上から順）
  *   表紙            … ヘッダー / フッター / 申請フォーム
- *   サーバーの特徴   … 友好協定 など（カード名ごとに中カードが並ぶ）
+ *   サーバーの特徴   … 友好協定 など（カードを足せば中カードが増える）
  *   サーバーの約束   … 基本ルール / 違反対応 / バフ使用ガイド
  *   イベントガイド   … 最強王国 / 特典 / その他イベント
  *   同盟紹介        … 時間表 / 同盟
@@ -14,19 +14,23 @@
  *   表示     … 「非表示」にすると行を消さずにページから隠せる
  *   並び順   … シート上の行の順番がそのまま表示順
  *
+ * シート名を変えても、タブの順番（表紙→特徴→約束→イベント→同盟）がそのままなら修正不要。
  * ※ このファイルの中身を編集する必要はありません。編集はすべてスプレッドシートで行います。
  */
 
 const SHEET_ID = '1vZQuzRFY62wWvovICo33Mj0ARVKG29NxctgujrQngtE';
 const CACHE_SECONDS = 60;   // 表示高速化のためのキャッシュ秒数（0で無効）
 
-// シート名（キー＝JSONのキー）
+// シート（キー＝JSONのキー）
+//   name  … まずこの名前でシートを探す
+//   index … 名前で見つからない時は、左から何番目のタブか（1始まり）で探す
+//   → シート名を変えても、タブの順番がそのままならGASの修正は不要
 const SHEETS = {
-  cover:    { name: '表紙' },
-  feature:  { name: 'サーバーの特徴' },
-  promise:  { name: 'サーバーの約束' },
-  event:    { name: 'イベントガイド' },
-  alliance: { name: '同盟紹介' },
+  cover:    { name: '表紙',           index: 1 },
+  feature:  { name: 'サーバーの特徴', index: 2 },
+  promise:  { name: 'サーバーの約束', index: 3 },
+  event:    { name: 'イベントガイド', index: 4 },
+  alliance: { name: '同盟紹介',       index: 5 },
 };
 
 const BASE_COLS = ['カード', '行の種類', 'タイトル', '文章', '表示'];
@@ -61,7 +65,7 @@ function doGet(e) {
 /** 1シートを { title, cards: { カード名: { title, desc, items: [...] } } } に変換 */
 function readSection_(ss, key) {
   const result = { title: '', cards: {} };
-  const sh = ss.getSheetByName(SHEETS[key].name);
+  const sh = findSheet_(ss, key);
   if (!sh) return result;
 
   const values = sh.getDataRange().getDisplayValues();
@@ -108,6 +112,15 @@ function readSection_(ss, key) {
   });
 
   return result;
+}
+
+/** シートを名前で探し、無ければタブの順番で探す */
+function findSheet_(ss, key) {
+  const def = SHEETS[key];
+  const byName = ss.getSheetByName(def.name);
+  if (byName) return byName;
+  const sheets = ss.getSheets();
+  return sheets[def.index - 1] || null;
 }
 
 /** "19:00, 21:00 (フリー)" → ["19:00", "21:00 (フリー)"] */

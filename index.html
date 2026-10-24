@@ -24,6 +24,9 @@
         body { background: #F4F8FB; }
         section[id] { scroll-margin-top: 16px; }
         .panel { background: #FFFFFF; border: 1px solid #D5E2EE; }
+        /* セル内の改行をページでもそのまま改行として表示する */
+        li p, #feature-cards p, #forms-container p, [data-t$="_desc"],
+        #config-buff_text, #config-svs_desc, #config-bonus_desc { white-space: pre-line; }
         .ttable th, .ttable td { padding: 10px 12px; border-bottom: 1px solid #E3ECF4; vertical-align: top; }
         .ttable tbody tr:last-child td { border-bottom: none; }
         .ttable .stick { position: sticky; left: 0; z-index: 1; }
@@ -549,6 +552,7 @@
                 const key = d.includes('同盟イベント時間表') ? '同盟イベント時間表' : (d.includes('時間表') ? '時間表' : '');
                 const link = w => `<a href="#alliance-times" class="text-ice-text font-bold underline underline-offset-2">${escapeHtml(w)}</a>`;
                 el.innerHTML = key ? d.split(key).map(escapeHtml).join(link(key)) : escapeHtml(d);
+                el.style.whiteSpace = 'pre-line';
             }
         }
     }
